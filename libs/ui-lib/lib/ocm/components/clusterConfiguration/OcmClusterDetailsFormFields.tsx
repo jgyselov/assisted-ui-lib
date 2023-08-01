@@ -35,10 +35,10 @@ import CpuArchitectureDropdown, {
 import OcmSNOControlGroup from './OcmSNOControlGroup';
 import useSupportLevelsAPI from '../../hooks/useSupportLevelsAPI';
 import { useOpenshiftVersions } from '../../hooks';
-import { ExternalPlatformDropdown, ExternalPlatformType } from './ExternalPlatformDropdown';
-import { useOracleDropdownItemState } from '../../hooks/useOracleDropdownItemState';
+import { ExternalPlatformDropdown } from './platformIntegration/ExternalPlatformDropdown';
 import { useClusterWizardContext } from '../clusterWizard/ClusterWizardContext';
 import { HostsNetworkConfigurationType } from '../../services/types';
+import type { ExternalPlatformType } from './platformIntegration/types';
 import { useNewFeatureSupportLevel } from '../../../common/components/newFeatureSupportLevels';
 
 export type OcmClusterDetailsFormFieldsProps = {
@@ -92,6 +92,7 @@ export const OcmClusterDetailsFormFields = ({
   const { getCpuArchitectures } = useOpenshiftVersions();
   const cpuArchitecturesByVersionImage = getCpuArchitectures(openshiftVersion);
   const clusterWizardContext = useClusterWizardContext();
+  const featureSupportLevelContext = useNewFeatureSupportLevel();
   const featureSupportLevelData = useSupportLevelsAPI(
     'features',
     values.openshiftVersion,
@@ -104,26 +105,9 @@ export const OcmClusterDetailsFormFields = ({
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const cpuArchitecture = (architectureData[values.cpuArchitecture] as CpuArchitectureItem).label;
-  const oracleDropdownItemState = useOracleDropdownItemState(
-    clusterExists,
-    featureSupportLevelData,
-    values.cpuArchitecture,
-  );
-  const featureSupportLevelContext = useNewFeatureSupportLevel();
   React.useEffect(() => {
     nameInputRef.current?.focus();
   }, []);
-
-  React.useEffect(() => {
-    if (clusterPlatform !== undefined) {
-      const platform = clusterPlatform === 'baremetal' ? 'none' : clusterPlatform;
-      setFieldValue('platform', platform);
-    } else {
-      if (!oracleDropdownItemState?.isSupported) {
-        setFieldValue('platform', 'none');
-      }
-    }
-  }, [clusterPlatform, setFieldValue, oracleDropdownItemState?.isSupported]);
 
   const handleExternalPartnerIntegrationsChange = React.useCallback(
     (selectedPlatform: ExternalPlatformType) => {
@@ -223,10 +207,11 @@ export const OcmClusterDetailsFormFields = ({
 
       <ExternalPlatformDropdown
         showOciOption={isOracleCloudPlatformIntegrationEnabled}
-        disabledOciTooltipContent={oracleDropdownItemState?.disabledReason}
-        isOciDisabled={oracleDropdownItemState?.isDisabled || false}
         onChange={handleExternalPartnerIntegrationsChange}
-        dropdownIsDisabled={clusterPlatform === 'oci'}
+        clusterPlatform={clusterPlatform}
+        clusterExists={clusterExists}
+        cpuArchitecture={cpuArchitecture ?? values.cpuArchitecture}
+        featureSupportLevelData={featureSupportLevelData}
       />
 
       <CustomManifestCheckbox clusterId={clusterId || ''} isDisabled={platform === 'oci'} />
