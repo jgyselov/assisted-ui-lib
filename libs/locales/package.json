@@ -16,6 +16,12 @@
       "en/translation.json": [
         "./@types/en.d.ts"
       ],
+      "es/translation.json": [
+        "./@types/es.d.ts"
+      ],
+      "fr/translation.json": [
+        "./@types/fr.d.ts"
+      ],
       "ja/translation.json": [
         "./@types/ja.d.ts"
       ],
